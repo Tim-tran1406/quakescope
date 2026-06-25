@@ -1,0 +1,21 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Secrets / local config
+.env
+
+# Raw + downloaded data (too big / regenerable — we keep the folder, not the contents)
+data/raw/*
+!data/raw/.gitkeep
+data/*.csv
+data/*.parquet
+data/*.db
+
+# OS
+.DS_Store
+
+# Personal Word study notes (kept local, not pushed)
+earthquake projects learning/

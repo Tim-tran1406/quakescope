@@ -1,0 +1,8 @@
+# Extra tools used to BUILD the study docs and screenshots.
+# Not needed to run QuakeScope itself.
+#   .venv/bin/python -m pip install -r requirements-dev.txt
+#   .venv/bin/python -m playwright install chromium   # one-time, for screenshots
+
+python-docx==1.2.0          # generate the Word study notes
+pillow==12.2.0              # trim diagram images
+playwright==1.60.0          # screenshot the live web map
