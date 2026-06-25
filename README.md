@@ -6,6 +6,8 @@ The whole thing runs on 124,479 real earthquakes from 2010 to today, magnitude 4
 
 ![QuakeScope live map](docs/images/phase5-map.png)
 
+**Live map: https://tim-tran1406.github.io/quakescope/**
+
 ## The questions I wanted to answer
 
 The goal was never to scatter dots on a map. It was to answer things people actually wonder about.
@@ -27,9 +29,9 @@ One honest note. This work describes hazard, it does not predict earthquakes, be
 
 ## How it is built
 
-Python handles the ingestion and analysis. The data lives in PostgreSQL and is shaped with SQL. The data science uses scikit learn (for the DBSCAN clustering and the Isolation Forest), along with SciPy and NumPy. The API is FastAPI and the map is built with Leaflet. A Power BI dashboard is planned for later, as noted in the roadmap.
+Python handles the ingestion and analysis. The data lives in PostgreSQL and is shaped with SQL. The data science uses scikit learn (for the DBSCAN clustering and the Isolation Forest), along with SciPy and NumPy. The API is FastAPI and the map is built with Leaflet.
 
-Everything flows through one database, which acts as the single source of truth. Both the API and the map simply read from it.
+Everything flows through one database. The FastAPI service reads from it live, while the public map is a static site that loads a snapshot of the data exported to JSON, which is why it can be hosted for free with no server to keep running.
 
 ![Architecture](docs/images/architecture.png)
 
@@ -95,17 +97,6 @@ Launch the API and the map:
 
 Then open http://127.0.0.1:8000/app/ for the map and http://127.0.0.1:8000/docs for the API documentation.
 
-## Roadmap
-
-✅ Pull the USGS data
-✅ PostgreSQL and SQL modelling
-✅ Data science, five families of methods
-✅ FastAPI REST API
-✅ Interactive web map
-✅ Polished, reproducible repo
-⬜ Power BI dashboard, waiting on a Windows setup since Power BI Desktop is Windows only
-⬜ Optional free cloud deploy
-
 ## Data and credits
 
-The earthquake data comes from the U.S. Geological Survey Earthquake Catalog and is public domain. Map tiles are from OpenStreetMap contributors. I built this as a learning and portfolio project.
+The earthquake data comes from the U.S. Geological Survey Earthquake Catalog and is public domain. Map tiles are from Esri. I built this as a learning and portfolio project.

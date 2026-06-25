@@ -898,7 +898,84 @@ def build_session_07():
     return out
 
 
+def build_session_08():
+    doc = Document()
+
+    doc.add_heading("QuakeScope — Session 08", level=0)
+    doc.add_heading("How to make a website", level=1)
+    intro = doc.add_paragraph(
+        "A plain-language guide to how a website is built and put online, using the "
+        "QuakeScope map as the worked example. No prior web knowledge assumed."
+    )
+    intro.runs[0].italic = True
+
+    doc.add_heading("1. What a website actually is", level=2)
+    doc.add_paragraph("A website is just files a browser knows how to read. Three languages, three jobs:")
+    for line in [
+        "HTML is the structure (the bones): what is on the page.",
+        "CSS is the style (the looks): colours, spacing, fonts.",
+        "JavaScript is the behaviour (the actions): it runs in the browser and makes things happen.",
+    ]:
+        doc.add_paragraph(line, style="List Bullet")
+
+    doc.add_heading("2. Two kinds of website: static and dynamic", level=2)
+    doc.add_picture(str(IMAGES / "static-vs-api.png"), width=Inches(6.4))
+    doc.add_paragraph(
+        "A static website is finished files handed over as-is, with no server thinking — "
+        "cheap, fast, hard to break. A dynamic website has a server (often a database and "
+        "an API) that builds a fresh answer per visit. Rule of thumb: if the data does not "
+        "change per visitor, make it static. Earthquake history is fixed, so our map is "
+        "static — we export the data to JSON once and the browser does the rest."
+    )
+
+    doc.add_heading("3. The pieces of a simple website", level=2)
+    for line in [
+        "index.html — the page itself (the browser looks for this first).",
+        "A stylesheet — ours is inline; bigger sites use a separate .css file.",
+        "JavaScript — app.js, the behaviour.",
+        "Data and libraries — our data/quakes.json, plus Leaflet loaded from a public CDN.",
+    ]:
+        doc.add_paragraph(line, style="List Bullet")
+
+    doc.add_heading("4. How putting it online works", level=2)
+    doc.add_paragraph(
+        "A website lives on a host: a computer, always on, that hands your files to anyone "
+        "who asks. You do not need your own server. The simplest free host for a code "
+        "project is GitHub Pages, which serves files straight from your repository at an "
+        "address like https://username.github.io/project/."
+    )
+
+    doc.add_heading("5. How we shipped the QuakeScope map", level=2)
+    for line in [
+        "Built the page — web/index.html and web/app.js (using Leaflet for the map).",
+        "Exported the data — a Python script wrote web/data/quakes.json, so no backend is needed.",
+        "Tested locally — ran a tiny local web server (you can't just double-click the HTML, "
+        "because browsers block a page from loading data files straight off the disk).",
+        "Deployed to GitHub Pages — an automated job publishes the web/ folder on every push.",
+    ]:
+        doc.add_paragraph(line, style="List Bullet")
+
+    doc.add_heading("6. Security: what to watch on any website", level=2)
+    for line in [
+        "Anything sent to the browser is public — never put passwords, private keys, or personal data in HTML/CSS/JS/data.",
+        "Keep secrets in .env and out of git, so they never reach GitHub or the site.",
+        "Check what you publish — we scanned for passwords and internal addresses before going live.",
+        "A static site has almost no attack surface: no server, no exposed database, nothing to hack.",
+        "If you later add a real backend, validate input, never glue user text into SQL, and lock down who can call your API.",
+    ]:
+        doc.add_paragraph(line, style="List Bullet")
+
+    doc.add_heading("The result", level=2)
+    doc.add_paragraph("The live map, hosted free as a static site:")
+    doc.add_picture(str(IMAGES / "phase5-map.png"), width=Inches(6.4))
+
+    out = OUT_DIR / "Session 08 - How to Make a Website.docx"
+    doc.save(str(out))
+    return out
+
+
 if __name__ == "__main__":
     for builder in (build_session_00, build_session_01, build_session_02, build_session_03,
-                    build_session_04, build_session_05, build_session_06, build_session_07):
+                    build_session_04, build_session_05, build_session_06, build_session_07,
+                    build_session_08):
         print(f"Wrote: {builder()}")

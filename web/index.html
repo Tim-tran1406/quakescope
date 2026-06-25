@@ -3,58 +3,63 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>QuakeScope — live earthquake map</title>
+  <title>QuakeScope — where the Earth shakes</title>
 
-  <!-- Leaflet: the free map library (loaded from its public CDN) -->
+  <!-- Leaflet: the free map library -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    body { margin: 0; font-family: Helvetica, Arial, sans-serif; }
-    #map { height: 100vh; width: 100%; }
+    /* An earthy, geographic palette: dark moss, sand, terracotta. */
+    :root {
+      --earth: #3a3f33; --sand: #f5f1e6; --terracotta: #c0612e; --ink: #2b2b2b;
+    }
+    body { margin: 0; font-family: "Helvetica Neue", Arial, sans-serif; color: var(--ink); }
+    #map { height: 100vh; width: 100%; background: #cde0e6; }  /* ocean tone behind tiles */
 
-    /* Top header bar */
     #bar {
       position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
-      background: rgba(32,33,36,0.92); color: #fff; padding: 10px 16px;
-      display: flex; align-items: center; gap: 16px;
+      background: var(--earth); color: var(--sand);
+      border-bottom: 3px solid var(--terracotta);
+      padding: 9px 16px; display: flex; align-items: center; gap: 16px;
     }
-    #bar h1 { font-size: 17px; margin: 0; }
-    #bar .sub { font-size: 12px; color: #bdc1c6; }
+    #bar h1 { font-size: 17px; margin: 0; letter-spacing: 0.5px; }
+    #bar .sub { font-size: 12px; color: #c9c6b6; }
     #bar .controls { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+    #bar .lbl { font-size: 12px; color: #c9c6b6; }
     #bar button {
-      background: #3c4043; color: #fff; border: 1px solid #5f6368;
-      border-radius: 6px; padding: 5px 10px; cursor: pointer; font-size: 13px;
+      background: transparent; color: var(--sand); border: 1px solid #6b6f5e;
+      border-radius: 5px; padding: 5px 11px; cursor: pointer; font-size: 13px;
     }
-    #bar button.active { background: #1a73e8; border-color: #1a73e8; }
-    #count { font-size: 12px; color: #bdc1c6; }
+    #bar button:hover { border-color: var(--sand); }
+    #bar button.active { background: var(--terracotta); border-color: var(--terracotta); color: #fff; }
+    #count { font-size: 12px; color: #c9c6b6; min-width: 64px; }
 
-    /* Legend box */
     .legend {
-      background: #fff; padding: 10px 12px; border-radius: 8px; font-size: 12px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.3); line-height: 1.6;
+      background: var(--sand); padding: 10px 12px; border-radius: 6px; font-size: 12px;
+      line-height: 1.7; box-shadow: 0 1px 4px rgba(0,0,0,0.3); border: 1px solid #d8d2bf;
     }
-    .legend b { display:block; margin-bottom: 4px; }
-    .dot { display:inline-block; width:12px; height:12px; border-radius:50%; margin-right:6px; vertical-align:middle; }
+    .legend b { display: block; margin-bottom: 3px; }
+    .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%;
+           margin-right: 6px; vertical-align: middle; border: 1px solid rgba(0,0,0,0.2); }
   </style>
 </head>
 <body>
   <div id="bar">
     <div>
       <h1>🌍 QuakeScope</h1>
-      <div class="sub">live earthquakes &amp; seismic-risk zones, from your own API</div>
+      <div class="sub">where the Earth shakes · 30,000+ quakes, magnitude 5 and up, since 2010</div>
     </div>
     <div class="controls">
-      <span class="sub">show magnitude:</span>
-      <button data-mag="5">M5+</button>
-      <button data-mag="6" class="active">M6+</button>
-      <button data-mag="7">M7+</button>
+      <span class="lbl">magnitude:</span>
+      <button data-mag="5">5+</button>
+      <button data-mag="6" class="active">6+</button>
+      <button data-mag="7">7+</button>
       <span id="count"></span>
     </div>
   </div>
 
   <div id="map"></div>
-
   <script src="app.js"></script>
 </body>
 </html>
