@@ -25,15 +25,14 @@ def main() -> None:
     engine = get_engine()
     with engine.connect() as conn:
         quakes = conn.execute(text("""
-            SELECT id,
-                   round(magnitude, 1)::float  AS mag,
-                   round(latitude, 3)::float   AS lat,
-                   round(longitude, 3)::float  AS lon,
-                   round(depth_km, 1)::float   AS depth,
+            SELECT round(magnitude, 1)::float AS mag,
+                   round(latitude, 2)::float  AS lat,   -- 2 dp (~1 km) keeps the file small
+                   round(longitude, 2)::float AS lon,
+                   round(depth_km)::int       AS depth,
                    place,
                    tsunami,
                    to_char(event_time AT TIME ZONE 'UTC',
-                           'YYYY-MM-DD"T"HH24:MI:SS"Z"')  AS time
+                           'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS time
             FROM staging.events
             WHERE magnitude >= :m
             ORDER BY magnitude ASC          -- big quakes drawn last, so they sit on top

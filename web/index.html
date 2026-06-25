@@ -3,63 +3,288 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>QuakeScope — where the Earth shakes</title>
+  <title>QuakeScope: where the Earth shakes</title>
 
-  <!-- Leaflet: the free map library -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
   <style>
-    /* An earthy, geographic palette: dark moss, sand, terracotta. */
     :root {
-      --earth: #3a3f33; --sand: #f5f1e6; --terracotta: #c0612e; --ink: #2b2b2b;
+      --earth: #34392d; --earth-dark: #262a20; --sand: #f3efe3;
+      --terracotta: #c0612e; --ink: #2b2b2b; --paper: #faf7ef; --muted: #6d6a5c;
     }
+    * { box-sizing: border-box; }
     body { margin: 0; font-family: "Helvetica Neue", Arial, sans-serif; color: var(--ink); }
-    #map { height: 100vh; width: 100%; background: #cde0e6; }  /* ocean tone behind tiles */
+    a { color: var(--terracotta); }
 
-    #bar {
-      position: absolute; top: 0; left: 0; right: 0; z-index: 1000;
+    /* ---------- top navigation ---------- */
+    #nav {
+      position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 2000;
       background: var(--earth); color: var(--sand);
       border-bottom: 3px solid var(--terracotta);
-      padding: 9px 16px; display: flex; align-items: center; gap: 16px;
+      display: flex; align-items: center; padding: 0 18px; gap: 18px;
     }
-    #bar h1 { font-size: 17px; margin: 0; letter-spacing: 0.5px; }
-    #bar .sub { font-size: 12px; color: #c9c6b6; }
-    #bar .controls { margin-left: auto; display: flex; gap: 6px; align-items: center; }
-    #bar .lbl { font-size: 12px; color: #c9c6b6; }
+    #nav .brand { font-weight: 700; font-size: 17px; letter-spacing: .5px; cursor: pointer; }
+    #nav .links { margin-left: auto; display: flex; gap: 6px; }
+    #nav .links a {
+      color: var(--sand); text-decoration: none; font-size: 14px;
+      padding: 6px 12px; border-radius: 6px; cursor: pointer;
+    }
+    #nav .links a:hover { background: rgba(255,255,255,.1); }
+    #nav .links a.active { background: var(--terracotta); color: #fff; }
+
+    /* ---------- view system ---------- */
+    .view { display: none; }
+    .view.active { display: block; }
+    .page { max-width: 920px; margin: 0 auto; padding: 78px 22px 60px; }
+    .page h2 { font-size: 26px; margin: 0 0 6px; color: var(--earth); }
+    .page .lead { color: var(--muted); margin: 0 0 26px; }
+
+    /* ---------- home / hero ---------- */
+    #home { background: var(--earth-dark); color: var(--sand); min-height: 100vh; }
+    .hero { position: relative; max-width: 880px; margin: 0 auto; padding: 120px 24px 80px; text-align: center; overflow: hidden; }
+    .hero .motif { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); opacity: .14; pointer-events: none; }
+    .hero h1 { font-size: 56px; margin: 0; letter-spacing: 1px; position: relative; }
+    .hero .tagline { font-size: 19px; color: #cfc9b5; margin: 12px 0 30px; position: relative; }
+    .hero .what { font-size: 16px; line-height: 1.7; color: #e7e2d3; max-width: 680px; margin: 0 auto 34px; position: relative; }
+    .hero .what b { color: #fff; }
+    .steps { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-bottom: 38px; position: relative; }
+    .step {
+      background: rgba(255,255,255,.06); border: 1px solid #4a4f40; border-radius: 10px;
+      padding: 14px 16px; width: 165px; text-align: left;
+    }
+    .step .n { font-size: 12px; color: var(--terracotta); font-weight: 700; }
+    .step .t { font-size: 15px; font-weight: 600; margin: 3px 0; }
+    .step .d { font-size: 12px; color: #bdb8a7; line-height: 1.4; }
+    .cta {
+      background: var(--terracotta); color: #fff; border: none; border-radius: 8px;
+      padding: 13px 26px; font-size: 16px; cursor: pointer; position: relative;
+    }
+    .cta:hover { background: #a9521f; }
+
+    /* ---------- map ---------- */
+    #map { height: calc(100vh - 52px); width: 100%; margin-top: 52px; background: #cfe2e8; }
+    #bar {
+      position: fixed; top: 52px; left: 0; right: 0; z-index: 1500;
+      background: rgba(38,42,32,.92); color: var(--sand);
+      padding: 7px 16px; display: flex; align-items: center; gap: 14px; font-size: 13px;
+    }
+    #bar .lbl { color: #c9c6b6; }
     #bar button {
       background: transparent; color: var(--sand); border: 1px solid #6b6f5e;
-      border-radius: 5px; padding: 5px 11px; cursor: pointer; font-size: 13px;
+      border-radius: 5px; padding: 4px 11px; cursor: pointer; font-size: 13px;
     }
     #bar button:hover { border-color: var(--sand); }
     #bar button.active { background: var(--terracotta); border-color: var(--terracotta); color: #fff; }
-    #count { font-size: 12px; color: #c9c6b6; min-width: 64px; }
-
+    #count { color: #c9c6b6; }
+    #loading {
+      position: fixed; inset: 52px 0 0 0; z-index: 1400; display: none;
+      align-items: center; justify-content: center; background: rgba(38,42,32,.55); color: #fff; font-size: 15px;
+    }
     .legend {
       background: var(--sand); padding: 10px 12px; border-radius: 6px; font-size: 12px;
-      line-height: 1.7; box-shadow: 0 1px 4px rgba(0,0,0,0.3); border: 1px solid #d8d2bf;
+      line-height: 1.7; box-shadow: 0 1px 4px rgba(0,0,0,.3); border: 1px solid #d8d2bf; color: var(--ink);
     }
     .legend b { display: block; margin-bottom: 3px; }
-    .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%;
-           margin-right: 6px; vertical-align: middle; border: 1px solid rgba(0,0,0,0.2); }
+    .dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: middle; border: 1px solid rgba(0,0,0,.2); }
+
+    /* ---------- findings ---------- */
+    #findings { background: var(--paper); min-height: 100vh; }
+    .finding { background: #fff; border: 1px solid #e7e1d0; border-radius: 10px; padding: 18px 20px; margin-bottom: 22px; }
+    .finding h3 { margin: 0 0 4px; color: var(--earth); font-size: 19px; }
+    .finding .sub { color: var(--terracotta); font-weight: 600; font-size: 14px; margin: 0 0 10px; }
+    .finding p { line-height: 1.65; margin: 10px 0 0; }
+    .finding img { width: 100%; border: 1px solid #eee; border-radius: 6px; margin-top: 6px; }
+
+    /* ---------- about ---------- */
+    #about { background: var(--paper); min-height: 100vh; }
+    .profile { display: flex; align-items: center; gap: 18px; margin-bottom: 22px; }
+    .avatar { width: 84px; height: 84px; border-radius: 50%; background: var(--earth); color: var(--sand);
+              display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; flex: 0 0 auto; }
+    .profile h2 { margin: 0; }
+    .profile .role { color: var(--terracotta); font-weight: 600; }
+    .profile .loc { color: var(--muted); font-size: 14px; }
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .about-card { background: #fff; border: 1px solid #e7e1d0; border-radius: 10px; padding: 16px 18px; }
+    .about-card h4 { margin: 0 0 8px; color: var(--earth); }
+    .about-card ul { margin: 0; padding-left: 18px; line-height: 1.6; }
+    .about p { line-height: 1.7; }
+    .contact a { margin-right: 16px; font-weight: 600; }
+    @media (max-width: 680px) { .about-grid { grid-template-columns: 1fr; } .hero h1 { font-size: 40px; } }
   </style>
 </head>
 <body>
-  <div id="bar">
-    <div>
-      <h1>🌍 QuakeScope</h1>
-      <div class="sub">where the Earth shakes · 30,000+ quakes, magnitude 5 and up, since 2010</div>
+  <nav id="nav">
+    <div class="brand" data-view="home">🌍 QuakeScope</div>
+    <div class="links">
+      <a data-view="map">Map</a>
+      <a data-view="findings">Findings</a>
+      <a data-view="about">About me</a>
     </div>
-    <div class="controls">
-      <span class="lbl">magnitude:</span>
+  </nav>
+
+  <!-- ===================== HOME ===================== -->
+  <section id="home" class="view active">
+    <div class="hero">
+      <svg class="motif" width="520" height="520" viewBox="0 0 520 520" fill="none" stroke="#e8c9a0">
+        <circle cx="260" cy="260" r="60" stroke-width="2"/>
+        <circle cx="260" cy="260" r="120" stroke-width="2"/>
+        <circle cx="260" cy="260" r="180" stroke-width="2"/>
+        <circle cx="260" cy="260" r="240" stroke-width="2"/>
+        <circle cx="260" cy="260" r="10" fill="#e8c9a0" stroke="none"/>
+      </svg>
+      <h1>QuakeScope</h1>
+      <p class="tagline">Where the Earth shakes, and what the shaking tells us.</p>
+      <p class="what">
+        QuakeScope takes <b>124,479 real earthquakes</b> from the United States Geological
+        Survey and turns them into clear answers. Where are the danger zones? Are quakes
+        really getting more frequent? Which few events matter most? Explore it on the map,
+        or read the <b>Findings</b> to see what the data revealed.
+      </p>
+      <div class="steps">
+        <div class="step"><div class="n">1 · COLLECT</div><div class="t">Pull the data</div><div class="d">Every quake magnitude 5 and up, worldwide, since 2010.</div></div>
+        <div class="step"><div class="n">2 · STORE</div><div class="t">Into a database</div><div class="d">Cleaned and shaped with SQL in PostgreSQL.</div></div>
+        <div class="step"><div class="n">3 · ANALYSE</div><div class="t">Run the science</div><div class="d">Clustering, trend tests, anomaly detection, risk scoring.</div></div>
+        <div class="step"><div class="n">4 · SHOW</div><div class="t">On this map</div><div class="d">The results, live in your browser.</div></div>
+      </div>
+      <button class="cta" data-view="map">Explore the map →</button>
+    </div>
+  </section>
+
+  <!-- ===================== MAP ===================== -->
+  <section id="map-view" class="view">
+    <div id="bar">
+      <span class="lbl">Show magnitude:</span>
       <button data-mag="5">5+</button>
       <button data-mag="6" class="active">6+</button>
       <button data-mag="7">7+</button>
       <span id="count"></span>
+      <span class="lbl" style="margin-left:auto">tip: click a quake or a risk zone</span>
     </div>
-  </div>
+    <div id="map"></div>
+    <div id="loading">loading earthquakes…</div>
+  </section>
 
-  <div id="map"></div>
+  <!-- ===================== FINDINGS ===================== -->
+  <section id="findings" class="view">
+    <div class="page">
+      <h2>Findings</h2>
+      <p class="lead">The charts our analysis produced, each explained in plain language.</p>
+
+      <div class="finding">
+        <h3>The world's earthquake zones, found automatically</h3>
+        <div class="sub">Method: clustering (DBSCAN)</div>
+        <img src="img/phase3-clusters.png" alt="Seismic zones map" />
+        <p>We let an algorithm group quakes that sit close together, with no hints from us.
+        It drew the Pacific Ring of Fire on its own. Each colour is one zone it discovered;
+        the grey dots are scattered quakes that did not belong to any dense zone.</p>
+      </div>
+
+      <div class="finding">
+        <h3>Small quakes are common, big ones are rare</h3>
+        <div class="sub">Method: the Gutenberg Richter law</div>
+        <img src="img/phase3-bvalue.png" alt="Frequency vs magnitude chart" />
+        <p>This counts how many quakes happen at each size. On a chart where each step down
+        means ten times more, the points fall on a straight line. That straight line is a
+        real law of nature: for every step up in magnitude there are about ten times fewer
+        quakes. Our slope of 1.17 is right where it should be.</p>
+      </div>
+
+      <div class="finding">
+        <h3>Are earthquakes increasing? No.</h3>
+        <div class="sub">Method: the Mann Kendall trend test</div>
+        <img src="img/phase3-trend.png" alt="Quakes per year" />
+        <p>Each bar is one year of quakes. The red line is almost flat, and a proper
+        statistical test agrees there is no real upward trend. The common feeling that
+        earthquakes are on the rise comes from better sensors and more news coverage, not
+        from the planet shaking more.</p>
+      </div>
+
+      <div class="finding">
+        <h3>How aftershocks fade after a big quake</h3>
+        <div class="sub">Method: Omori's law</div>
+        <img src="img/phase3-omori.png" alt="Aftershock decay" />
+        <p>After the huge 2011 Japan quake, aftershocks came fast at first and then tailed
+        off along a smooth curve. This pattern, called Omori's law, is so reliable that the
+        scattered dots line up neatly along it.</p>
+      </div>
+
+      <div class="finding">
+        <h3>Spotting the unusually violent months</h3>
+        <div class="sub">Method: anomaly detection</div>
+        <img src="img/phase3-anomalies-monthly.png" alt="Monthly anomalies" />
+        <p>Most months see a normal number of quakes. The red dots mark months that stood
+        far above normal. The tallest spike is March 2011, the month the Japan quake and its
+        thousands of aftershocks struck.</p>
+      </div>
+
+      <div class="finding">
+        <h3>Which regions are most dangerous</h3>
+        <div class="sub">Method: a combined risk score</div>
+        <img src="img/phase3-risk.png" alt="Riskiest regions" />
+        <p>We scored each zone using three things: how much total energy it releases, how
+        strong its biggest quake was, and how often it shakes. Japan comes out on top,
+        followed by Tonga, Kamchatka, Chile and Vanuatu.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== ABOUT ===================== -->
+  <section id="about" class="view">
+    <div class="page about">
+      <div class="profile">
+        <div class="avatar">TBQ</div>
+        <div>
+          <h2>Tran Bao Quan</h2>
+          <div class="role">Data Scientist · Machine Learning Engineer</div>
+          <div class="loc">Ho Chi Minh City, Vietnam</div>
+        </div>
+      </div>
+
+      <p>I am a 19 year old data scientist finishing a B.Sc. (Hons) in Data Science at the
+      University of Hertfordshire, Singapore campus, graduating in November 2026 with First
+      Class Honours (GPA 4.09). I enjoy turning messy, complicated data into clear and useful
+      answers, which is exactly what QuakeScope does. I built it to practise the full journey
+      from raw data all the way to a website like this one.</p>
+
+      <div class="about-grid">
+        <div class="about-card">
+          <h4>What I work with</h4>
+          <ul>
+            <li>Python, Pandas, NumPy</li>
+            <li>Machine learning: XGBoost, LightGBM, scikit learn, SHAP</li>
+            <li>SQL and databases</li>
+            <li>FastAPI, Streamlit, building things end to end</li>
+          </ul>
+        </div>
+        <div class="about-card">
+          <h4>Experience</h4>
+          <ul>
+            <li><b>AI Data &amp; Engineering Intern</b>, Agents2Agents (remote, US), 2025</li>
+            <li>Worked on LLM evaluation pipelines and data tooling for AI agent systems.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="about-card" style="margin-top:16px">
+        <h4>A few other projects</h4>
+        <ul>
+          <li><a href="https://github.com/bquan1406-droid/ecommerce-churn-prediction">E commerce churn prediction</a>: predicting which customers will leave (AUC 0.999), with SHAP showing delivery delay as the top cause.</li>
+          <li><a href="https://github.com/bquan1406-droid/fraud-detection-api">Real time fraud detection API</a>: a FastAPI service that flags fraudulent card transactions and pings a Discord alert.</li>
+          <li><a href="https://github.com/bquan1406-droid/cpu-benchmark-predictor">CPU benchmark predictor</a>: predicting hardware benchmark scores from specs (R squared 0.98).</li>
+          <li><a href="https://github.com/bquan1406-droid/football-tactical-fingerprint">Football tactical fingerprint</a>: clustering 14,000 players into playing styles you can search in plain English.</li>
+        </ul>
+      </div>
+
+      <p class="contact" style="margin-top:22px">
+        <a href="https://github.com/Tim-tran1406">GitHub</a>
+        <a href="https://www.linkedin.com/in/tran-bao-quan7b2172353/">LinkedIn</a>
+        <a href="mailto:bquan1406@gmail.com">bquan1406@gmail.com</a>
+      </p>
+      <p style="color:var(--muted);font-size:14px">Open to data science and machine learning roles.</p>
+    </div>
+  </section>
+
   <script src="app.js"></script>
 </body>
 </html>
